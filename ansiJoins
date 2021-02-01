@@ -1,0 +1,104 @@
+from taba a, tabb b, tabc c
+where 
+a.id = b.id(+) and
+(a.ic = c.ic(+) or a.icc = c.icc) and
+c.ic = 10
+
+kv pairs
+a.: taba a
+b.: tabb b
+c.: tabc c
+
+
+a.id = b.id(+) and (b.ic = c.ic(+) or b.icc = c.icc) and c.ic = 10
+
+split by and|or without removing and|or
+
+a.id = b.id(+) , and (b.ic = c.ic(+) , or b.icc = c.icc) , and c.ic = 10
+
+delete everything between (. and = ) or (. and (+)) for each and create tuples/kv
+
+{a.=b.(+) , a.id = b.id(+) }, {and b.=c(+), and  (b.ic = c.ic(+)}, { or b.=c.(+), or  b.icc = c.icc) }, { and c.=, and  c.ic = 10}
+
+replcae =, and|or with space in the keys
+{a. b.(+) , a.id = b.id(+) }, { b. c(+), and (b.ic = c.ic(+)}, { b. c.(+), or b.icc = c.icc) }, { c. , and c.ic = 10}
+
+if in the values no . or no (+) create separate sets
+
+
+filters
+{ c. , and c.ic = 10}
+
+joins
+{a. b.(+) , a.id = b.id(+) }, { b. c(+), and (b.ic = c.ic(+)}, { b. c.(+), or b.icc = c.icc) }
+
+If pattern . .(+) then add left join after first dot a. left join b.(+) 
+{a. b.(+) , a.id = b.id(+) }, { b. c(+),  and ( b.ic = c.ic(+) or  b.icc = c.icc) }
+
+ignore 
+
+if there is no plus after first. but (+) after second . then use left 
+
+replace a. with taba a and append left join  and append (replace b. with tabb b on) and join value a.id = b.id(+)
+
+taba a left join tabb b on a.id = b.id(+), and tabb b left join tabc c on ( b.ic = c.ic(+) or  b.icc = c.icc)
+
+
+
+-- program --
+import re
+
+from collections import defaultdict
+
+s = """FROM taba a, tabb b, tabc c
+WHERE 
+a.id = b.id(+) and
+(a.ic = c.ic(+) or a.icc = c.icc(+)) and
+c.ic = 10 ORDER"""
+
+ss = s.replace("\n"," ")
+
+pattern = "FROM(.*?)ORDER"
+
+substring = re.search(pattern, ss).group(1)
+
+t = re.split("WHERE",substring)[0].strip().split(',')
+
+c = re.split("WHERE",substring)[1] 
+
+tkv = dict()
+
+for ele in t:
+	tk = ele.strip().split(' ')[1]+'.'
+	tv = ele.strip()
+	tkv[tk]=tv
+
+cs=c.strip().replace(' and ', ' ~and ').replace(' or ', ' ~or ').split('~')
+
+ckvs = []
+for string in cs:
+	cks = re.sub("[\.].*[+]", "", re.sub("[\.].*[=]", "", string.replace("+", "+~")))
+	ck = cks.replace("and", "").replace("or", "").strip().replace("(", "").replace(")", "")
+	cv = string
+	ckvs.append((ck,cv))
+
+dckv = defaultdict(list)
+for (k, v) in  ckvs:
+	dckv[k].append(v)
+
+ckv = dict(dckv)
+
+wckv = dict()
+jckv = dict()
+for (k, v) in ckv.items():
+   if '~' in k:
+      jckv[k] = v
+   else:
+      wckv[k] = v
+	  
+
+
+ 
+
+
+
