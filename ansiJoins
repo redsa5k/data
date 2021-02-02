@@ -47,7 +47,7 @@ taba a left join tabb b on a.id = b.id(+), and tabb b left join tabc c on ( b.ic
 
 -- program --
 import re
-
+import json
 from collections import defaultdict
 
 s = """FROM taba a, tabb b, tabc c
@@ -78,8 +78,8 @@ cs=c.strip().replace(' and ', ' ~and ').replace(' or ', ' ~or ').split('~')
 ckvs = []
 for string in cs:
 	cks = re.sub("[\.].*[+]", "", re.sub("[\.].*[=]", "", string.replace("+", "+~")))
-	ck = cks.replace("and", "").replace("or", "").strip().replace("(", "").replace(")", "")
-	cv = string
+	ck = cks.replace("and", "").replace("or", "").strip().replace("(", "").replace(")", "") 
+	cv = string.replace('(+)', '')
 	ckvs.append((ck,cv))
 
 dckv = defaultdict(list)
@@ -97,6 +97,52 @@ for (k, v) in ckv.items():
       wckv[k] = v
 	  
 
+jkv = dict()
+for (k, v) in jckv.items():
+	if '~' in k:
+		if '~' in ' '.join(k.strip().split()).split(' ')[0]:
+			outer = ' '.join(k.strip().split()).split(' ')[0]
+			nonouter = ' '.join(k.strip().split()).split(' ')[1]
+			j = nonouter + " left join " + outer + " "
+			jkv[k] = j
+		else:
+			outer = ' '.join(k.strip().split()).split(' ')[1]
+			nonouter = ' '.join(k.strip().split()).split(' ')[0]
+			js = nonouter + " left join " + outer + " "
+			j = js.replace("~", "")
+			jkv[k] = j
+	else:
+		if '~' not in k:
+			ij = ' '.join(k.strip().split()).split(' ')[1]
+			inn = ' '.join(k.strip().split()).split(' ')[0]
+			j  = inn + " inner join " + ij + " "
+			jkv[k] = j
+
+rps = "\{\}\"\:\[\]\,~"
+
+cjkv = dict()
+for (k, v) in jckv.items():
+   v = ' '.join(v)
+   for i in rps:
+      v = str(v).replace(i, '')
+   cjkv[k] = v
+		
+fs =  json.dumps(jckv)
+
+print(fs)
+
+	
+	
+	
+		
+		
+		
+			
+			
+		
+		
+		
+	
 
  
 
